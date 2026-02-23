@@ -20,7 +20,7 @@ Bazarr  -->  wrapper (:9000)  -->  whisper-server (:8081)
 
 - Intel Arc A770 (16 GB VRAM)
 - AMD Threadripper CPU
-- Tested with the `large-v3` model (~3 GB)
+- Tested with `large-v3` and `large-v3-turbo` models
 
 ## Prerequisites
 
@@ -42,13 +42,23 @@ git clone https://github.com/alno74d/whisper.git
 cd whisper
 ```
 
-### 2. Download the Whisper model
+### 2. Download a Whisper model
+
+Pick one (or both). Turbo is faster with minimal quality loss; large-v3 is more accurate.
 
 ```bash
 mkdir -p models
+
+# large-v3-turbo (~1.6 GB) — recommended, much faster
+wget -O models/ggml-large-v3-turbo.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+
+# large-v3 (~3 GB) — best accuracy
 wget -O models/ggml-large-v3.bin \
   https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
 ```
+
+Set `MODEL_PATH` in `docker-compose.yml` to match whichever model you downloaded.
 
 ### 3. Start the stack
 
@@ -92,7 +102,7 @@ services:
     volumes:
       - ./models:/models
     environment:
-      - MODEL_PATH=/models/ggml-large-v3.bin
+      - MODEL_PATH=/models/ggml-large-v3-turbo.bin
       - GGML_SYCL_DEVICE=0
       - WHISPER_THREADS=16
     networks:
@@ -115,13 +125,21 @@ networks:
   whisper-net:
 ```
 
-2. The Whisper model file:
+2. A Whisper model file (pick one):
 
 ```bash
 mkdir -p models
+
+# large-v3-turbo (~1.6 GB) — recommended
+wget -O models/ggml-large-v3-turbo.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+
+# large-v3 (~3 GB) — best accuracy
 wget -O models/ggml-large-v3.bin \
   https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
 ```
+
+Update `MODEL_PATH` in the compose file to match (e.g., `/models/ggml-large-v3-turbo.bin`).
 
 3. Pull and start:
 
@@ -161,7 +179,7 @@ http://<host-ip>:9000
 
 | Variable | Default | Description |
 |---|---|---|
-| `MODEL_PATH` | `/models/ggml-large-v3.bin` | Path to the GGML model inside the container |
+| `MODEL_PATH` | `/models/ggml-large-v3-turbo.bin` | Path to the GGML model inside the container |
 | `GGML_SYCL_DEVICE` | `0` | SYCL device index for the GPU |
 | `ONEAPI_DEVICE_SELECTOR` | `level_zero:0` | oneAPI device selector |
 | `WHISPER_THREADS` | all cores (`nproc`) | Number of CPU threads for whisper-server |
