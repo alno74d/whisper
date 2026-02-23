@@ -11,6 +11,7 @@ services:
     environment:
       - MODEL_PATH=/models/ggml-large-v3.bin
       - GGML_SYCL_DEVICE=0
+      - WHISPER_THREADS=16
     networks:
       - whisper-net
     restart: unless-stopped

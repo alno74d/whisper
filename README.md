@@ -50,14 +50,25 @@ wget -O models/ggml-large-v3.bin \
   https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
 ```
 
-### 3. Build and start
+### 3. Start the stack
+
+You can either pull pre-built images from Docker Hub or build locally.
+
+**Pull from Docker Hub (recommended):**
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+**Build locally:**
 
 ```bash
 docker compose build
 docker compose up -d
 ```
 
-The build compiles whisper.cpp from source with oneAPI/SYCL support inside the container. No oneAPI installation needed on the host.
+Building locally compiles whisper.cpp from source with oneAPI/SYCL support inside the container. No oneAPI installation needed on the host.
 
 ### 4. Verify
 
@@ -65,6 +76,78 @@ The build compiles whisper.cpp from source with oneAPI/SYCL support inside the c
 docker compose ps
 curl http://localhost:9000/health
 ```
+
+## Deploy on another machine
+
+On a target machine that has Docker and the Intel GPU drivers, you only need three things:
+
+1. A `docker-compose.yml` (copy it from this repo or write a minimal one):
+
+```yaml
+services:
+  whisper-server:
+    image: lozachmp/whisper-server:latest
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./models:/models
+    environment:
+      - MODEL_PATH=/models/ggml-large-v3.bin
+      - GGML_SYCL_DEVICE=0
+      - WHISPER_THREADS=16
+    networks:
+      - whisper-net
+    restart: unless-stopped
+
+  wrapper:
+    image: lozachmp/whisper-wrapper:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_SERVER_URL=http://whisper-server:8081
+    depends_on:
+      - whisper-server
+    networks:
+      - whisper-net
+    restart: unless-stopped
+
+networks:
+  whisper-net:
+```
+
+2. The Whisper model file:
+
+```bash
+mkdir -p models
+wget -O models/ggml-large-v3.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
+```
+
+3. Pull and start:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+No build tools, no source code needed on the target machine.
+
+## Publishing images to Docker Hub
+
+Images are built and pushed from the build machine (Threadripper) using `build.sh`.
+
+```bash
+# Log in to Docker Hub (one-time)
+docker login
+
+# Build and push both images
+./build.sh
+
+# Build only (no push)
+./build.sh --no-push
+```
+
+The script tags each image with `latest` and the current git short SHA (e.g., `lozachmp/whisper-server:ed4c4fe`).
 
 ## Bazarr configuration
 
@@ -81,6 +164,7 @@ http://<host-ip>:9000
 | `MODEL_PATH` | `/models/ggml-large-v3.bin` | Path to the GGML model inside the container |
 | `GGML_SYCL_DEVICE` | `0` | SYCL device index for the GPU |
 | `ONEAPI_DEVICE_SELECTOR` | `level_zero:0` | oneAPI device selector |
+| `WHISPER_THREADS` | all cores (`nproc`) | Number of CPU threads for whisper-server |
 | `WHISPER_SERVER_URL` | `http://whisper-server:8081` | Internal URL the wrapper uses to reach whisper-server |
 
 ### GPU device selection
