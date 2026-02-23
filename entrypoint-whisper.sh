@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-source /opt/intel/oneapi/setvars.sh
+source /opt/intel/oneapi/setvars.sh --force 2>/dev/null || true
 
 export GGML_SYCL_DEVICE=${GGML_SYCL_DEVICE:-0}
 export ZES_ENABLE_SYSMAN=1
