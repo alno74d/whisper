@@ -48,7 +48,7 @@ WHISPER_LANGUAGES = {
 }
 
 app = FastAPI(title="Bazarr Whisper Wrapper")
-client = httpx.AsyncClient(timeout=httpx.Timeout(connect=10.0, read=600.0, write=10.0, pool=10.0))
+client = httpx.AsyncClient(timeout=httpx.Timeout(connect=10.0, read=3600.0, write=10.0, pool=10.0))
 
 
 def pcm_to_wav(pcm_data: bytes, sample_rate: int = 16000, channels: int = 1, bits_per_sample: int = 16) -> bytes:
@@ -86,6 +86,12 @@ def map_output_format(output: str) -> str:
         "tsv": "text",  # no direct equivalent, fall back to text
     }
     return mapping.get(output, "srt")
+
+
+@app.get("/status")
+async def status():
+    """Status endpoint for Bazarr provider test."""
+    return JSONResponse({"version": "1.0.0"})
 
 
 @app.get("/health")
@@ -143,11 +149,15 @@ async def asr(
 
     logger.info(f"Forwarding ASR request: lang={language}, task={task}, format={output}")
 
-    r = await client.post(
-        f"{WHISPER_SERVER_URL}/inference",
-        data=form_data,
-        files=files,
-    )
+    try:
+        r = await client.post(
+            f"{WHISPER_SERVER_URL}/inference",
+            data=form_data,
+            files=files,
+        )
+    except httpx.ReadTimeout:
+        logger.error("Whisper server timed out processing audio")
+        return JSONResponse({"error": "whisper-server timed out"}, status_code=504)
 
     return Response(
         content=r.content,
