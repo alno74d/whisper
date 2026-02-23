@@ -1,5 +1,6 @@
 services:
   whisper-server:
+    image: lozachmp/whisper-server:latest
     build:
       context: .
       dockerfile: Dockerfile.whisper
@@ -15,6 +16,7 @@ services:
     restart: unless-stopped
 
   wrapper:
+    image: lozachmp/whisper-wrapper:latest
     build:
       context: .
       dockerfile: Dockerfile.wrapper
