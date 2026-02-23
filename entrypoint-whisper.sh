@@ -10,6 +10,16 @@ export ONEAPI_DEVICE_SELECTOR=${ONEAPI_DEVICE_SELECTOR:-level_zero:0}
 MODEL_PATH=${MODEL_PATH:-/models/ggml-large-v3-turbo.bin}
 WHISPER_THREADS=${WHISPER_THREADS:-$(nproc)}
 
+# Download model if not present
+if [ ! -f "${MODEL_PATH}" ]; then
+  MODEL_NAME=$(basename "${MODEL_PATH}")
+  URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${MODEL_NAME}"
+  echo "Model not found at ${MODEL_PATH}, downloading from ${URL} ..."
+  mkdir -p "$(dirname "${MODEL_PATH}")"
+  wget -O "${MODEL_PATH}" "${URL}"
+  echo "Download complete."
+fi
+
 echo "Starting whisper-server with model: ${MODEL_PATH}"
 echo "SYCL device: ${GGML_SYCL_DEVICE}"
 echo "Threads: ${WHISPER_THREADS}"

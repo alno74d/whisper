@@ -23,7 +23,7 @@ FROM intel/oneapi-basekit:${ONEAPI_VERSION} AS runtime
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y curl ffmpeg && \
+    apt-get install -y curl ffmpeg wget && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/build/bin/whisper-server /usr/local/bin/whisper-server

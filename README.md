@@ -42,23 +42,22 @@ git clone https://github.com/alno74d/whisper.git
 cd whisper
 ```
 
-### 2. Download a Whisper model
+### 2. Choose a Whisper model
 
-Pick one (or both). Turbo is faster with minimal quality loss; large-v3 is more accurate.
+The model is downloaded automatically on first start. Set `MODEL_PATH` in `docker-compose.yml` to pick which one:
+
+| Model | `MODEL_PATH` | Size | Notes |
+|---|---|---|---|
+| large-v3-turbo | `/models/ggml-large-v3-turbo.bin` | ~1.6 GB | Default — much faster |
+| large-v3 | `/models/ggml-large-v3.bin` | ~3 GB | Best accuracy |
+
+Or download manually beforehand:
 
 ```bash
 mkdir -p models
-
-# large-v3-turbo (~1.6 GB) — recommended, much faster
 wget -O models/ggml-large-v3-turbo.bin \
   https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
-
-# large-v3 (~3 GB) — best accuracy
-wget -O models/ggml-large-v3.bin \
-  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
 ```
-
-Set `MODEL_PATH` in `docker-compose.yml` to match whichever model you downloaded.
 
 ### 3. Start the stack
 
@@ -125,28 +124,14 @@ networks:
   whisper-net:
 ```
 
-2. A Whisper model file (pick one):
-
-```bash
-mkdir -p models
-
-# large-v3-turbo (~1.6 GB) — recommended
-wget -O models/ggml-large-v3-turbo.bin \
-  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
-
-# large-v3 (~3 GB) — best accuracy
-wget -O models/ggml-large-v3.bin \
-  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
-```
-
-Update `MODEL_PATH` in the compose file to match (e.g., `/models/ggml-large-v3-turbo.bin`).
-
-3. Pull and start:
+2. Pull and start (the model downloads automatically on first boot):
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
+
+To use large-v3 instead of turbo, change `MODEL_PATH` in the compose file to `/models/ggml-large-v3.bin`.
 
 No build tools, no source code needed on the target machine.
 
