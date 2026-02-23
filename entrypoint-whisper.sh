@@ -16,6 +16,4 @@ exec whisper-server \
     --host 0.0.0.0 \
     --port 8081 \
     -m "${MODEL_PATH}" \
-    --convert \
-    --no-mmap \
     "$@"
