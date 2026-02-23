@@ -16,7 +16,7 @@ if [ ! -f "${MODEL_PATH}" ]; then
   URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${MODEL_NAME}"
   echo "Model not found at ${MODEL_PATH}, downloading from ${URL} ..."
   mkdir -p "$(dirname "${MODEL_PATH}")"
-  wget -O "${MODEL_PATH}" "${URL}"
+  wget -q --show-progress -O "${MODEL_PATH}" "${URL}"
   echo "Download complete."
 fi
 
