@@ -29,6 +29,8 @@ RUN apt-get update && \
 COPY --from=build /app/build/bin/whisper-server /usr/local/bin/whisper-server
 COPY --from=build /app/build/src/libwhisper.so* /usr/local/lib/
 COPY --from=build /app/build/ggml/src/libggml*.so* /usr/local/lib/
+# Backend libs (SYCL, etc.) are nested under ggml/src/ggml-*/
+COPY --from=build /app/build/ggml/src/ggml-sycl/libggml-sycl.so* /usr/local/lib/
 RUN ldconfig
 
 COPY entrypoint-whisper.sh /entrypoint.sh
