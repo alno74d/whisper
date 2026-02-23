@@ -1,0 +1,39 @@
+ARG ONEAPI_VERSION=2025.1.1-0-devel-ubuntu24.04
+
+# ---- Build stage ----
+FROM intel/oneapi-basekit:${ONEAPI_VERSION} AS build
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y build-essential wget cmake git && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git .
+
+ARG GGML_SYCL_F16=ON
+RUN cmake -B build \
+      -DGGML_SYCL=ON \
+      -DGGML_SYCL_F16=${GGML_SYCL_F16} \
+      -DCMAKE_C_COMPILER=icx \
+      -DCMAKE_CXX_COMPILER=icpx && \
+    cmake --build build --config Release -j$(nproc)
+
+# ---- Runtime stage ----
+FROM intel/oneapi-basekit:${ONEAPI_VERSION} AS runtime
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y curl ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /app/build/bin/whisper-server /usr/local/bin/whisper-server
+COPY --from=build /app/build/src/libwhisper.so* /usr/local/lib/
+COPY --from=build /app/build/ggml/src/libggml*.so* /usr/local/lib/
+RUN ldconfig
+
+COPY entrypoint-whisper.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8081
+
+ENTRYPOINT ["/entrypoint.sh"]

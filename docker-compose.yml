@@ -1,0 +1,32 @@
+services:
+  whisper-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.whisper
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./models:/models
+    environment:
+      - MODEL_PATH=/models/ggml-large-v3.bin
+      - GGML_SYCL_DEVICE=0
+    networks:
+      - whisper-net
+    restart: unless-stopped
+
+  wrapper:
+    build:
+      context: .
+      dockerfile: Dockerfile.wrapper
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_SERVER_URL=http://whisper-server:8081
+    depends_on:
+      - whisper-server
+    networks:
+      - whisper-net
+    restart: unless-stopped
+
+networks:
+  whisper-net:
